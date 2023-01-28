@@ -1,10 +1,15 @@
 const express = require("express");
 const mongoose = require('mongoose');
-const { MONGOURI } = require('./config/keys')
+const userRoutes = require('./routes/user');
+const { MONGOURI } = require('./config/keys');
 
 const app = express();
+const BASE_URL = '/api/v1';
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use(`${BASE_URL}/auth`, userRoutes);
+
 
 // Connect to mongodb
 mongoose
