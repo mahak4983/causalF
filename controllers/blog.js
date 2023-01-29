@@ -43,7 +43,10 @@ exports.editBlog = async (req, res) => {
         heading, content
     } = req.body;
     try {
-        const blogData = await Blog.findById(blogId,{userId:1});
+        const blogData = await Blog.findById(
+            blogId, 
+            { userId: 1 }
+        );
         if (!blogData) {
             return res.status(404).send({ message: "Blog not found" });
         }
@@ -73,4 +76,30 @@ exports.editBlog = async (req, res) => {
     }
    
 
+}
+
+exports.deleteBlog = async (req, res) => {
+    const blogId = req.params.BlogId;
+    try {
+
+        const blogData = await Blog.findById(
+            blogId,
+            { userId: 1 }
+        );
+        if (!blogData) {
+            return res.status(404).send({ message: "Blog not found" });
+        }
+        if (blogData.userId.toString() !== req.userInfo._id) {
+            return res.status(400).send({ error: "You dont have access to change this blog" });
+        }
+
+        await Blog.findByIdAndDelete(blogId);
+       return res.status(200).send({ message: "Successfully Deleted" });
+        
+    } catch (e) {
+        console.log(e);
+        return res.status(500).send({ message: 'Internal server error!' });
+
+
+    }
 }
