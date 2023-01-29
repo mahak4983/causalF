@@ -94,6 +94,18 @@ exports.deleteBlog = async (req, res) => {
         }
 
         await Blog.findByIdAndDelete(blogId);
+         
+        await User.updateOne(
+            { _id: req.userInfo._id },
+            {
+                $pull: {
+                    'blogsCreated':
+                    {
+                       _id:blogId
+                    }
+                }
+            }
+        )
        return res.status(200).send({ message: "Successfully Deleted" });
         
     } catch (e) {
