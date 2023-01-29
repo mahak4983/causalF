@@ -103,3 +103,23 @@ exports.deleteBlog = async (req, res) => {
 
     }
 }
+
+exports.getBlog = async (req, res) => {
+    const blogId = req.params.BlogId;
+    try {
+
+        const blogData = await Blog.findById(blogId);
+        if (!blogData) {
+            return res.status(404).send({ message: "Blog not found" });
+        }
+
+        return res.status(200).send({ message: "Blog Retrieved", blogData });
+
+    } catch (e) {
+        console.log(e);
+        return res.status(500).send({ message: 'Internal server error!' });
+
+
+    }
+}
+
