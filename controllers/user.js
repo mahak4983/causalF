@@ -1,6 +1,7 @@
 const User = require('../schema/User');
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
+const nodemailer = require("nodemailer");
 const nameValidator = require('../validation/name');
 const usernameValidator = require('../validation/username');
 const emailValidator = require('../validation/email');
@@ -137,5 +138,96 @@ exports.loginUser = async (req, res) => {
         return res.send({ message: 'Login successful', userInfo });
     } catch (e) {
         return res.status(500).send({ message: 'Internal server error!' });
+    }
+}
+
+exports.postForgotPassword = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const oldUser = await User.findOne({ email });
+        if (!oldUser) {
+            return res.json({ status: "User Not Exists!!" });
+        }
+        const secret = JWT_SECRET + oldUser.password;
+        const token = jwt.sign({ email: oldUser.email, id: oldUser._id }, secret, {
+            expiresIn: "5m",
+        });
+        const link = `http://localhost:8080/api/v1/auth/reset-password/${oldUser._id}/${token}`;
+        const transporter = nodemailer.createTransport({
+            host: 'smtp.ethereal.email',
+            port: 587,
+            auth: {
+                user: 'polly.damore68@ethereal.email',
+                pass: 'HX1RwFTdKxJSbS7mfd'
+            }
+        });
+
+        var mailOptions = {
+            from: "polly.damore68@ethereal.email",
+            to: `${email}`,
+            subject: "Password Reset",
+            text: link,
+        };
+
+        transporter.sendMail(mailOptions, function (error, info) {
+            if (error) {
+                console.log(error);
+            } else {
+                console.log("Email sent: " + info.response);
+                return res.status(200).send({ message: "Email sent" });
+            }
+        });
+        console.log(link);
+    } catch (e) {
+        
+    }
+}
+
+exports.getResetPassword = async (req, res) => {
+
+        const { id, token } = req.params;
+        const oldUser = await User.findOne({ _id: id });
+        if (!oldUser) {
+            return res.json({ status: "User Not Exists!!" });
+        }
+        const secret = JWT_SECRET + oldUser.password;
+        try {
+            const verify = jwt.verify(token, secret);
+            res.status(200).send({ message: "Verified" });
+          //  res.render("index", { email: verify.email, status: "Not Verified" });
+        } catch (error) {
+            console.log(error);
+            res.send("Not Verified");
+        }
+   
+}
+
+exports.postResetPassword = async (req, res) => {
+    const { id, token } = req.params;
+    const { password } = req.body;
+
+    const oldUser = await User.findOne({ _id: id });
+    if (!oldUser) {
+        return res.json({ status: "User Not Exists!!" });
+    }
+    const secret = JWT_SECRET + oldUser.password;
+    try {
+        const verify = jwt.verify(token, secret);
+        const encryptedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+        await User.updateOne(
+            {
+                _id: id,
+            },
+            {
+                $set: {
+                    password: encryptedPassword,
+                },
+            }
+        );
+        res.status(200).send({ message: " Password Updated" });
+       
+    } catch (error) {
+        console.log(error);
+        res.json({ status: "Something Went Wrong" });
     }
 }

@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require('mongoose');
 const userRoutes = require('./routes/user');
 const blogRoutes = require('./routes/blog');
+const globalRoutes = require('./routes/global');
 const { MONGOURI } = require('./config/keys');
 
 const app = express();
@@ -11,6 +12,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(`${BASE_URL}/auth`, userRoutes);
 app.use(`${BASE_URL}/blog`, blogRoutes);
+app.use(`${BASE_URL}/home`, globalRoutes);
 
 
 // Connect to mongodb
