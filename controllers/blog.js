@@ -1,8 +1,21 @@
 const Blog = require('../schema/Blog');
 const User = require('../schema/User');
 
+
+/**
+ * @route POST /blog/create
+ *
+ * @access private
+ *
+ * @description Authenticated users Create Blogs
+ *
+ * @param heading heading of the blog
+ * @param content content of the blog
+ *
+ * @returns A message if blog is successfully created
+ */
 exports.createBlog = async (req, res) => {
-    console.log(req.userInfo._id);
+    
     const {
         heading, content
     } = req.body;
@@ -36,6 +49,23 @@ exports.createBlog = async (req, res) => {
     }
 
 }
+
+/**
+ * @route POST /blog/edit/:BlogId
+ *
+ * @access private
+ *
+ * @description Authenticated users Edit Blogs
+ *
+ * @param heading heading of the blog
+ * @param content content of the blog
+ *
+ * @returns 
+ * 200: A message if blog is successfully edited
+ * 400: If unauthorized user tries to edit
+ * 404: If blog is not found
+ * 500: Server Error
+ */
 
 exports.editBlog = async (req, res) => {
     const blogId = req.params.BlogId;
@@ -78,6 +108,22 @@ exports.editBlog = async (req, res) => {
 
 }
 
+/**
+ * @route DELETE /blog/delete/:BlogId
+ *
+ * @access private
+ *
+ * @description Authenticated users Delete Blogs
+ *
+ * @param heading heading of the blog
+ * @param content content of the blog
+ *
+ * @returns 
+ * 200: A message if blog is successfully deleted
+ * 400: If unauthorized user tries to delete
+ * 404: If blog is not found
+ * 500: Server Error
+ */
 exports.deleteBlog = async (req, res) => {
     const blogId = req.params.BlogId;
     try {
@@ -116,6 +162,18 @@ exports.deleteBlog = async (req, res) => {
     }
 }
 
+/**
+ * @route GET /blog/view/:BlogId
+ *
+ * @access public
+ *
+ * @description view a single blog
+ *
+ * @returns 
+ * 200: A message if blog is successfully retrieved
+ * 404: If blog is not found
+ * 500: Server Error
+ */
 exports.getBlog = async (req, res) => {
     const blogId = req.params.BlogId;
     try {

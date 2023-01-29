@@ -1,5 +1,17 @@
 const Blog = require('../schema/Blog');
 const limitPerPage = 10;
+
+/**
+ * @route GET /home/?pageNo=
+ *
+ * @access public
+ *
+ * @description Display 10 blogs per page
+ *
+ *
+ * @returns 
+ * 200: A message if blogs are successfully retrieved
+ */
 exports.getAllBlogs = async (req, res) => {
     const pageNo = req.query.pageNo || 1;
         

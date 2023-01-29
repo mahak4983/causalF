@@ -12,7 +12,21 @@ const SALT_ROUNDS = 12;
 
 
 
-
+/**
+ * @route /auth/register
+ *
+ * @access public
+ *
+ * @description Register a user with the given details
+ * *
+ * @body The request body should be a json object as defined in the `user schema
+ *
+ * @returns
+ *  200: a json object with a 'message' field
+ *  400:
+ *    a parameter is incorrect/absent or userId is taken
+ *  500: internal server error --> A json object with 'message' field
+ */
 exports.registerUser = async (req, res) => {
  
     const {
@@ -53,11 +67,20 @@ exports.registerUser = async (req, res) => {
             });
             return;
         }
+
+        const userNameAlreadyExists = await User.exists({ userName });
+        if (userNameAlreadyExists) {
+            return res.status(400).send({ message: "Username Already exists" });
+        }
+        const emailAlreadyExists = await User.exists({ email });
+        if (emailAlreadyExists) {
+            return res.status(400).send({ message: "Email Already exists" });
+
+        }
+
         // hash the user's password
         const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-        console.log(hashedPassword)
-
-        console.log(req.body)
+  
         const userData = {
             userName,
             name,
@@ -73,6 +96,7 @@ exports.registerUser = async (req, res) => {
 
         res.send({ message: 'Successfully registered. Kindly login!' });
     } catch (e) {
+        console.log(e)
         if (e.name === 'MongoError' && e.code === 11000) {
             // duplicate key error
             res.status(400).send({ userId: 'Username unavailable' });
@@ -84,6 +108,23 @@ exports.registerUser = async (req, res) => {
 
 }
 
+/**
+ * @route /auth/login
+ *
+ * @access public
+ *
+ * @description Login a user with the given credentials
+ *
+ * @body The request body should be a json object containing {uid (username/email), password}
+ *
+ * @returns
+ *  200: a json object with a 'message' field
+ *  400:
+ *    a parameter is incorrect/absent
+ *  401: Wrong credentials
+ *  404: User not found
+ *  500: internal server error --> A json object with 'message' field
+ */
 exports.loginUser = async (req, res) => {
     const { uid, password } = req.body;
     // Validate the parameters
@@ -141,12 +182,26 @@ exports.loginUser = async (req, res) => {
     }
 }
 
+/**
+ * @route /auth/forgot-password
+ *
+ * @access public
+ *
+ * @description Update password for a user
+ *
+ * @body Email of the user whose password needs to be reset
+ *
+ * @returns
+ *  200: a json object with a 'message' field
+ *  404: User not found
+ *  500: internal server error --> A json object with 'message' field
+ */
 exports.postForgotPassword = async (req, res) => {
     const { email } = req.body;
     try {
         const oldUser = await User.findOne({ email });
         if (!oldUser) {
-            return res.json({ status: "User Not Exists!!" });
+            return res.status(404).send({ message: "User Not Exists!!" });
         }
         const secret = JWT_SECRET + oldUser.password;
         const token = jwt.sign({ email: oldUser.email, id: oldUser._id }, secret, {
@@ -183,12 +238,20 @@ exports.postForgotPassword = async (req, res) => {
     }
 }
 
+/**
+ * @route /auth/reset-password/:id/:token
+ *
+ * @access public
+ *
+ * @description verify the token and user
+ *
+ */
 exports.getResetPassword = async (req, res) => {
 
         const { id, token } = req.params;
         const oldUser = await User.findOne({ _id: id });
         if (!oldUser) {
-            return res.json({ status: "User Not Exists!!" });
+            return res.status(404).send({ message: "User Not Exists!!" });
         }
         const secret = JWT_SECRET + oldUser.password;
         try {
@@ -202,13 +265,28 @@ exports.getResetPassword = async (req, res) => {
    
 }
 
+
+/**
+ * @route POST /auth/reset-password/:id/:token
+ *
+ * @access public
+ *
+ * @description Update Password for a user
+ *
+ * @body New Password
+ *
+ * @returns
+ *  200: a json object with a 'message' field
+ *  404: User not found
+ *  500: internal server error --> A json object with 'message' field
+ */
 exports.postResetPassword = async (req, res) => {
     const { id, token } = req.params;
     const { password } = req.body;
 
     const oldUser = await User.findOne({ _id: id });
     if (!oldUser) {
-        return res.json({ status: "User Not Exists!!" });
+        return res.status(404).send({ message: "User Not Exists!!" });
     }
     const secret = JWT_SECRET + oldUser.password;
     try {
